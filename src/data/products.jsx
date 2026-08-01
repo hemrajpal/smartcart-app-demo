@@ -1,0 +1,68 @@
+const products = [
+  {
+    id: 1,
+    title: "Nike Air Max",
+    category: "Shoes",
+    price: 120,
+    image: "https://picsum.photos/id/21/300/300",
+    description: "Comfortable running shoes for everyday use.",
+  },
+  {
+    id: 2,
+    title: "Casual T-Shirt",
+    category: "Clothing",
+    price: 25,
+    image: "https://picsum.photos/id/29/300/300",
+    description: "100% cotton round-neck t-shirt.",
+  },
+  {
+    id: 3,
+    title: "Smart Watch",
+    category: "Electronics",
+    price: 199,
+    image: "https://picsum.photos/id/3/300/300",
+    description: "Track your fitness and daily activities.",
+  },
+  {
+    id: 4,
+    title: "Wireless Headphones",
+    category: "Electronics",
+    price: 89,
+    image: "https://picsum.photos/id/180/300/300",
+    description: "Noise-cancelling Bluetooth headphones.",
+  },
+  {
+    id: 5,
+    title: "Leather Backpack",
+    category: "Bags",
+    price: 75,
+    image: "https://picsum.photos/id/1062/300/300",
+    description: "Stylish backpack for work and travel.",
+  },
+  {
+    id: 6,
+    title: "Sunglasses",
+    category: "Accessories",
+    price: 35,
+    image: "https://picsum.photos/id/1011/300/300",
+    description: "UV-protected stylish sunglasses.",
+  },
+  {
+    id: 7,
+    title: "Denim Jacket",
+    category: "Clothing",
+    price: 65,
+    image: "https://picsum.photos/id/1005/300/300",
+    description: "Classic blue denim jacket.",
+  },
+  {
+    id: 8,
+    title: "Gaming Mouse",
+    category: "Electronics",
+    price: 45,
+    image: "https://picsum.photos/id/48/300/300",
+    description: "RGB gaming mouse with adjustable DPI.",
+  },
+];
+
+export default products;
