@@ -6,9 +6,15 @@ import Signup from "../pages/Signup";
 import Home from "../pages/Home";
 import Cart from "../pages/Cart";
 import ProductDetails from "../pages/ProductDetails";
-import ProtectedRoute from "../components/ProtectedRoute";
 import Checkout from "../pages/Checkout";
 import OrderSuccess from "../pages/OrderSuccess";
+import Account from "../pages/Account";
+import Orders from "../pages/Orders";
+import Addresses from "../pages/Addresses";
+import ChangePassword from "../pages/ChangePassword";
+
+import ProtectedRoute from "../components/ProtectedRoute";
+import MainLayout from "../layouts/MainLayout";
 
 function AppRoutes() {
   return (
@@ -18,44 +24,32 @@ function AppRoutes() {
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Protected Routes */}
-        <Route path="/home" element={<Home />} />
-
+        {/* Protected Routes with Navbar */}
         <Route
-          path="/cart"
           element={
             <ProtectedRoute>
-              <Cart />
+              <MainLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="/home" element={<Home />} />
 
-        <Route
-          path="/product/:id"
-          element={
-            <ProtectedRoute>
-              <ProductDetails />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="/cart" element={<Cart />} />
 
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedRoute>
-              <Checkout />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="/product/:id" element={<ProductDetails />} />
 
-        <Route
-          path="/success"
-          element={
-            <ProtectedRoute>
-              <OrderSuccess />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="/checkout" element={<Checkout />} />
+
+          <Route path="/success" element={<OrderSuccess />} />
+
+          <Route path="/account" element={<Account />} />
+
+          <Route path="/orders" element={<Orders />} />
+
+          <Route path="/account/address" element={<Addresses />} />
+
+          <Route path="/account/password" element={<ChangePassword />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

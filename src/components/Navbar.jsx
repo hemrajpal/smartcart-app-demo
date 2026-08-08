@@ -4,8 +4,8 @@ import {
   Button,
   Flex,
   Heading,
+  Menu,
   Spacer,
-  Text,
 } from "@chakra-ui/react";
 
 import { Link, useNavigate } from "react-router-dom";
@@ -14,14 +14,15 @@ import { useSelector } from "react-redux";
 function Navbar() {
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const auth = JSON.parse(localStorage.getItem("auth"));
+  const user = auth?.user;
 
   const cart = useSelector((state) => state.cart);
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const cartCount = cart.length;
 
   const logout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("auth");
     navigate("/");
   };
 
@@ -37,9 +38,7 @@ function Navbar() {
           to="/home"
           variant="ghost"
           color="white"
-          _hover={{
-            bg: "blue.500",
-          }}
+          _hover={{ bg: "blue.500" }}
         >
           Home
         </Button>
@@ -49,9 +48,7 @@ function Navbar() {
           to="/cart"
           variant="ghost"
           color="white"
-          _hover={{
-            bg: "blue.500",
-          }}
+          _hover={{ bg: "blue.500" }}
         >
           Cart
           <Badge ml={2} colorPalette="red">
@@ -59,11 +56,45 @@ function Navbar() {
           </Badge>
         </Button>
 
-        <Text>Hi, {user?.name}</Text>
+        <Menu.Root>
+          <Menu.Trigger asChild>
+            <Button variant="ghost" color="white" _hover={{ bg: "blue.500" }}>
+              👤 {user?.name}
+            </Button>
+          </Menu.Trigger>
 
-        <Button colorPalette="red" size="sm" onClick={logout}>
-          Logout
-        </Button>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.Item value="account" onClick={() => navigate("/account")}>
+                My Account
+              </Menu.Item>
+
+              <Menu.Item value="orders" onClick={() => navigate("/orders")}>
+                My Orders
+              </Menu.Item>
+
+              <Menu.Item
+                value="address"
+                onClick={() => navigate("/account/address")}
+              >
+                Addresses
+              </Menu.Item>
+
+              <Menu.Item
+                value="password"
+                onClick={() => navigate("/account/password")}
+              >
+                Change Password
+              </Menu.Item>
+
+              <Menu.Separator />
+
+              <Menu.Item value="logout" color="red.500" onClick={logout}>
+                Logout
+              </Menu.Item>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Menu.Root>
       </Flex>
     </Box>
   );

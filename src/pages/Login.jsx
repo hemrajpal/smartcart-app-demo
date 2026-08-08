@@ -1,51 +1,64 @@
 import { useState } from "react";
+
 import {
   Box,
   Button,
+  Card,
   Field,
   Heading,
   Input,
   InputGroup,
-  Card,
-  VStack,
   Text,
+  VStack,
 } from "@chakra-ui/react";
+
 import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+
+import { login } from "../services/auth.service";
+import { useToast } from "../components/ToastProvider";
 
 function Login() {
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const { showToast } = useToast();
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm();
 
-  const handleLogin = () => {
-    const savedUser = JSON.parse(localStorage.getItem("registeredUser"));
+  const onSubmit = async (data) => {
+    try {
+      const response = await login({
+        email: data.email,
+        password: data.password,
+      });
 
-    if (!savedUser) {
-      alert("Please signup first");
-      return;
-    }
+      const authData = {
+        isLoggedIn: true,
+        token: response.data.token,
+        user: response.data.user,
+      };
 
-    if (
-      savedUser.email === formData.email &&
-      savedUser.password === formData.password
-    ) {
-      localStorage.setItem("user", JSON.stringify(savedUser));
+      localStorage.setItem("auth", JSON.stringify(authData));
+
+      showToast({
+        title: "Login successful",
+        description: `Welcome ${response.data.user.name}`,
+        type: "success",
+      });
 
       navigate("/home");
-    } else {
-      alert("Invalid email or password");
+    } catch (error) {
+      showToast({
+        title: "Login failed",
+        description:
+          error.response?.data?.message || "Invalid email or password",
+        type: "error",
+      });
     }
   };
 
@@ -60,62 +73,78 @@ function Login() {
     >
       <Card.Root width="100%" maxW="420px" shadow="lg">
         <Card.Body>
-          <VStack gap={5}>
-            <Heading size="lg">Login</Heading>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <VStack gap={5}>
+              <Heading size="lg">Login</Heading>
 
-            <Field.Root>
-              <Field.Label>Email</Field.Label>
+              <Field.Root invalid={!!errors.email}>
+                <Field.Label>Email</Field.Label>
 
-              <Input
-                name="email"
-                type="email"
-                placeholder="Enter email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </Field.Root>
-
-            <Field.Root>
-              <Field.Label>Password</Field.Label>
-
-              <InputGroup
-                endElement={
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </Button>
-                }
-              >
                 <Input
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter password"
-                  value={formData.password}
-                  onChange={handleChange}
+                  type="email"
+                  placeholder="Enter email"
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^\S+@\S+\.\S+$/,
+                      message: "Invalid email address",
+                    },
+                  })}
                 />
-              </InputGroup>
-            </Field.Root>
 
-            <Button width="100%" colorPalette="blue" onClick={handleLogin}>
-              Login
-            </Button>
+                <Field.ErrorText>{errors.email?.message}</Field.ErrorText>
+              </Field.Root>
 
-            <Text fontSize="sm">
-              Don't have an account?{" "}
-              <Link
-                to="/signup"
-                style={{
-                  color: "#3182CE",
-                  fontWeight: "bold",
-                }}
+              <Field.Root invalid={!!errors.password}>
+                <Field.Label>Password</Field.Label>
+
+                <InputGroup
+                  endElement={
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </Button>
+                  }
+                >
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter password"
+                    {...register("password", {
+                      required: "Password is required",
+                    })}
+                  />
+                </InputGroup>
+
+                <Field.ErrorText>{errors.password?.message}</Field.ErrorText>
+              </Field.Root>
+
+              <Button
+                type="submit"
+                width="100%"
+                colorPalette="blue"
+                loading={isSubmitting}
               >
-                Signup
-              </Link>
-            </Text>
-          </VStack>
+                Login
+              </Button>
+
+              <Text fontSize="sm">
+                Don't have an account?{" "}
+                <Link
+                  to="/signup"
+                  style={{
+                    color: "#3182CE",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Signup
+                </Link>
+              </Text>
+            </VStack>
+          </form>
         </Card.Body>
       </Card.Root>
     </Box>

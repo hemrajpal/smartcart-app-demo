@@ -41,24 +41,6 @@ const cartReducer = (state = initialState, action) => {
       };
     }
 
-    case UPDATE_QUANTITY: {
-      const updatedCart = state.cart
-        .map((item) =>
-          item.id === action.payload.id
-            ? {
-                ...item,
-                quantity: action.payload.quantity,
-              }
-            : item
-        )
-        .filter((item) => item.quantity > 0);
-
-      return {
-        ...state,
-        cart: updatedCart,
-      };
-    }
-
     case REMOVE_FROM_CART: {
       const updatedCart = state.cart.filter(
         (item) => item.id !== action.payload

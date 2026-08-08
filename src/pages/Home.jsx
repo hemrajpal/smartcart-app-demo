@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Box,
@@ -8,46 +8,100 @@ import {
   Heading,
   Image,
   Input,
+  Spinner,
   Text,
   VStack,
 } from "@chakra-ui/react";
 
-import Navbar from "../components/Navbar";
-import products from "../data/products";
 import { useDispatch } from "react-redux";
 import { ADD_TO_CART } from "../redux/actionTypes";
+import { useToast } from "../components/ToastProvider";
+import privateApi from "../config/privateApi";
 
 function Home() {
   const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(null);
+
   const dispatch = useDispatch();
+  const { showToast } = useToast();
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+
+      const response = await privateApi.get("/products");
+
+      setProducts(response.data.data || []);
+    } catch (error) {
+      showToast({
+        title: "Error",
+        description: "Unable to load products.",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const filteredProducts = products.filter((product) =>
-    product.title.toLowerCase().includes(search.toLowerCase())
+    product.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const addToCart = (product) => {
-    dispatch({
-      type: ADD_TO_CART,
-      payload: product,
-    });
+  const addToCart = async (product) => {
+    try {
+      setCartLoading(product.id);
 
-    //alert("Added to cart");
+      await privateApi.post("/cart", {
+        product_id: product.id,
+        quantity: 1,
+      });
+
+      dispatch({
+        type: ADD_TO_CART,
+        payload: product,
+      });
+
+      showToast({
+        title: "Added to cart",
+        description: `${product.name} has been added to your cart.`,
+        type: "success",
+      });
+    } catch (error) {
+      showToast({
+        title: "Error",
+        description:
+          error.response?.data?.message || "Failed to add product to cart.",
+        type: "error",
+      });
+    } finally {
+      setCartLoading(null);
+    }
   };
 
   return (
-    <>
-      <Navbar />
+    <Box p={6}>
+      <Heading mb={5}>Shop Products</Heading>
 
-      <Box p={6}>
-        <Heading mb={5}>Shop Products</Heading>
+      <Input
+        placeholder="Search products..."
+        mb={6}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
-        <Input
-          placeholder="Search products..."
-          mb={6}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
+      {loading ? (
+        <Box display="flex" justifyContent="center" py={10}>
+          <Spinner size="lg" color="blue.500" />
+        </Box>
+      ) : filteredProducts.length === 0 ? (
+        <Text>No products found.</Text>
+      ) : (
         <Grid
           templateColumns={{
             base: "1fr",
@@ -61,11 +115,15 @@ function Home() {
             <Card.Root key={product.id} shadow="md" overflow="hidden">
               <Link to={`/product/${product.id}`}>
                 <Image
-                  src={product.image}
-                  alt={product.title}
+                  src={
+                    product.image ||
+                    "https://placehold.co/400x300?text=No+Image"
+                  }
+                  alt={product.name}
                   height="220px"
+                  width="100%"
                   objectFit="cover"
-                  cursor="pointer"
+                  fallbackSrc="https://placehold.co/400x300?text=No+Image"
                 />
               </Link>
 
@@ -81,19 +139,26 @@ function Home() {
                         color: "blue.500",
                       }}
                     >
-                      {product.title}
+                      {product.name}
                     </Heading>
                   </Link>
 
-                  <Text color="gray.600">{product.category}</Text>
+                  {/* Temporary category */}
+                  <Text color="gray.600">General</Text>
+
+                  {/* <Text color="gray.500" noOfLines={2}>
+                    {product.description}
+                  </Text> */}
 
                   <Text fontSize="xl" fontWeight="bold">
-                    ${product.price}
+                    ₹{Number(product.price).toFixed(2)}
                   </Text>
 
                   <Button
                     colorPalette="blue"
                     onClick={() => addToCart(product)}
+                    loading={cartLoading === product.id}
+                    disabled={cartLoading === product.id}
                   >
                     Add to Cart
                   </Button>
@@ -110,8 +175,8 @@ function Home() {
             </Card.Root>
           ))}
         </Grid>
-      </Box>
-    </>
+      )}
+    </Box>
   );
 }
 

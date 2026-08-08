@@ -1,167 +1,169 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
+  Badge,
   Box,
   Button,
   Card,
+  Dialog,
   Heading,
-  Input,
-  Text,
-  VStack,
   HStack,
   Image,
-  Badge,
-  Dialog,
   Portal,
+  Spinner,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import Navbar from "../components/Navbar";
 import { CLEAR_CART } from "../redux/actionTypes";
+
+import privateApi from "../config/privateApi";
+import { useToast } from "../components/ToastProvider";
 
 function Checkout() {
   const navigate = useNavigate();
+
   const dispatch = useDispatch();
+  const { showToast } = useToast();
 
-  const cart = useSelector((state) => state.cart);
+  const [addresses, setAddresses] = useState([]);
 
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "9876543210",
-      address: "12 Park Street",
-      city: "Kolkata",
-      state: "West Bengal",
-      zip: "700016",
-      is_default: 1,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      phone: "9123456780",
-      address: "221B Baker Street",
-      city: "Mumbai",
-      state: "Maharashtra",
-      zip: "400001",
-      is_default: 0,
-    },
-    {
-      id: 3,
-      name: "Rahul Sharma",
-      phone: "9988776655",
-      address: "45 MG Road",
-      city: "Bangalore",
-      state: "Karnataka",
-      zip: "560001",
-      is_default: 0,
-    },
-  ]);
-
-  const defaultAddress = addresses.find((item) => item.is_default === 1);
-
-  const [selectedAddress, setSelectedAddress] = useState(defaultAddress?.id);
+  const [selectedAddress, setSelectedAddress] = useState(null);
 
   const [openAddressModal, setOpenAddressModal] = useState(false);
 
-  const [showNewAddress, setShowNewAddress] = useState(false);
+  const [loadingAddress, setLoadingAddress] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-  });
+  const [placingOrder, setPlacingOrder] = useState(false);
 
-  const currentAddress =
-    addresses.find((item) => item.id === selectedAddress) || defaultAddress;
+  const [cart, setCart] = useState([]);
+  const [loadingCart, setLoadingCart] = useState(false);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const total = cart.reduce(
+    (sum, item) => sum + Number(item.product.price) * item.quantity,
+    0
+  );
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const fetchAddresses = async () => {
+    try {
+      setLoadingAddress(true);
+
+      const response = await privateApi.get("/address/list");
+
+      const list = response.data.data || [];
+
+      setAddresses(list);
+
+      const defaultAddress = list.find((item) => item.is_default === true);
+
+      if (defaultAddress) {
+        setSelectedAddress(defaultAddress.id);
+      } else if (list.length > 0) {
+        setSelectedAddress(list[0].id);
+      }
+    } catch (error) {
+      console.log("Address error", error);
+    } finally {
+      setLoadingAddress(false);
+    }
   };
 
-  // Change default address
+  const fetchCart = async () => {
+    try {
+      setLoadingCart(true);
+
+      const response = await privateApi.get("/cart");
+
+      setCart(response.data.data || []);
+    } catch (error) {
+      showToast({
+        title: "Error",
+        description: "Unable to load cart.",
+        type: "error",
+      });
+    } finally {
+      setLoadingCart(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+    fetchCart();
+  }, []);
+
+  const currentAddress = addresses.find((item) => item.id === selectedAddress);
+
   const selectAddress = (address) => {
-    const updatedAddresses = addresses.map((item) => ({
-      ...item,
-      is_default: item.id === address.id ? 1 : 0,
-    }));
-
-    setAddresses(updatedAddresses);
-
     setSelectedAddress(address.id);
 
     setOpenAddressModal(false);
   };
 
-  // Add new address and make default
-  const saveNewAddress = () => {
-    const newAddress = {
-      id: Date.now(),
-      ...formData,
-      is_default: 1,
-    };
-
-    const updatedAddresses = addresses.map((item) => ({
-      ...item,
-      is_default: 0,
-    }));
-
-    updatedAddresses.push(newAddress);
-
-    setAddresses(updatedAddresses);
-
-    setSelectedAddress(newAddress.id);
-
-    setShowNewAddress(false);
-
-    setOpenAddressModal(false);
-
-    setFormData({
-      name: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zip: "",
-    });
-  };
-
-  const placeOrder = () => {
+  const placeOrder = async () => {
     if (!currentAddress) {
-      alert("Please select address");
+      showToast({
+        title: "Address required",
+        description: "Please select a delivery address",
+        type: "error",
+      });
+
+      navigate("/account/address");
       return;
     }
 
-    const order = {
-      address: currentAddress,
-      products: cart,
-      total,
-      date: new Date(),
-    };
+    try {
+      setPlacingOrder(true);
 
-    localStorage.setItem("order", JSON.stringify(order));
+      const payload = {
+        address_id: currentAddress.id,
 
-    dispatch({
-      type: CLEAR_CART,
-    });
+        items: cart.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+        })),
+      };
 
-    navigate("/success");
+      const response = await privateApi.post("/order/checkout", payload);
+
+      dispatch({
+        type: CLEAR_CART,
+      });
+
+      showToast({
+        title: "Order placed",
+        description: "Your order has been placed successfully",
+        type: "success",
+      });
+
+      navigate("/success", {
+        state: {
+          order: response.data.order,
+        },
+      });
+    } catch (error) {
+      showToast({
+        title: "Order failed",
+        description: error.response?.data?.message || "Unable to place order",
+        type: "error",
+      });
+    } finally {
+      setPlacingOrder(false);
+    }
   };
+
+  if (loadingCart || loadingAddress) {
+    return (
+      <Box py={20} textAlign="center">
+        <Spinner size="lg" />
+      </Box>
+    );
+  }
 
   return (
     <>
-      <Navbar />
-
       <Box p={6}>
         <Heading mb={6}>Checkout</Heading>
 
@@ -180,31 +182,50 @@ function Checkout() {
               <VStack align="stretch" gap={5}>
                 <Heading size="md">Delivery Address</Heading>
 
-                {currentAddress && (
+                {loadingAddress && (
+                  <Box display="flex" justifyContent="center" py={5}>
+                    <Spinner />
+                  </Box>
+                )}
+
+                {!loadingAddress && currentAddress && (
                   <Card.Root
                     borderWidth="1px"
                     borderColor="blue.400"
                     bg="blue.50"
                   >
                     <Card.Body>
-                      <HStack justify="space-between">
+                      <HStack justify="space-between" align="start">
                         <Box>
                           <Text fontWeight="bold">{currentAddress.name}</Text>
 
-                          <Text>{currentAddress.address}</Text>
+                          <Text>Phone: {currentAddress.phone}</Text>
+
+                          <Text>{currentAddress.address_line_1}</Text>
+
+                          {currentAddress.address_line_2 && (
+                            <Text>{currentAddress.address_line_2}</Text>
+                          )}
 
                           <Text>
-                            {currentAddress.city}, {currentAddress.state} -{" "}
-                            {currentAddress.zip}
+                            {currentAddress.city}, {currentAddress.state}
+                            {" - "}
+                            {currentAddress.postal_code}
                           </Text>
 
-                          <Text>Phone: {currentAddress.phone}</Text>
+                          <Text>{currentAddress.country}</Text>
                         </Box>
 
-                        <Badge colorPalette="green">Default</Badge>
+                        {currentAddress.is_default === true && (
+                          <Badge colorPalette="green">Default</Badge>
+                        )}
                       </HStack>
                     </Card.Body>
                   </Card.Root>
+                )}
+
+                {!loadingAddress && !currentAddress && (
+                  <Text>No address selected</Text>
                 )}
 
                 <Button
@@ -214,11 +235,18 @@ function Checkout() {
                 >
                   Change Address
                 </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate("/account/address")}
+                >
+                  Manage Addresses
+                </Button>
               </VStack>
             </Card.Body>
           </Card.Root>
 
-          {/* ORDER */}
+          {/* ORDER SUMMARY */}
 
           <Card.Root flex="1">
             <Card.Body>
@@ -226,24 +254,43 @@ function Checkout() {
                 Order Summary
               </Heading>
 
-              <VStack align="stretch">
+              <VStack align="stretch" gap={4}>
                 {cart.map((item) => (
                   <HStack key={item.id} justify="space-between">
                     <HStack>
-                      <Image src={item.image} boxSize="60px" />
+                      <Image
+                        src={
+                          item.product.image ||
+                          "https://placehold.co/400x300?text=No+Image"
+                        }
+                        boxSize="60px"
+                        objectFit="cover"
+                      />
 
                       <Text>
-                        {item.title} x {item.quantity}
+                        {item.product.name}
+
+                        {" x "}
+
+                        {item.quantity}
                       </Text>
                     </HStack>
 
-                    <Text>${item.price * item.quantity}</Text>
+                    <Text>
+                      ₹{(Number(item.product.price) * item.quantity).toFixed(2)}
+                    </Text>
                   </HStack>
                 ))}
 
-                <Heading size="md">Total: ${total.toFixed(2)}</Heading>
+                <Heading size="md">Total: ₹{total.toFixed(2)}</Heading>
 
-                <Button colorPalette="green" onClick={placeOrder}>
+                <Button
+                  colorPalette="green"
+                  loading={placingOrder}
+                  loadingText="Placing order..."
+                  disabled={placingOrder || cart.length === 0}
+                  onClick={placeOrder}
+                >
                   Place Order
                 </Button>
               </VStack>
@@ -252,7 +299,7 @@ function Checkout() {
         </HStack>
       </Box>
 
-      {/* ADDRESS POPUP */}
+      {/* SELECT ADDRESS POPUP */}
 
       <Dialog.Root
         open={openAddressModal}
@@ -273,9 +320,11 @@ function Checkout() {
                     <Card.Root
                       key={address.id}
                       cursor="pointer"
-                      borderWidth={address.is_default === 1 ? "2px" : "1px"}
+                      borderWidth={
+                        address.id === selectedAddress ? "2px" : "1px"
+                      }
                       borderColor={
-                        address.is_default === 1 ? "blue.500" : "gray.200"
+                        address.id === selectedAddress ? "blue.500" : "gray.200"
                       }
                       onClick={() => selectAddress(address)}
                     >
@@ -284,81 +333,24 @@ function Checkout() {
                           <Box>
                             <Text fontWeight="bold">{address.name}</Text>
 
-                            <Text>{address.address}</Text>
+                            <Text>{address.address_line_1}</Text>
 
                             <Text>
-                              {address.city}, {address.state} - {address.zip}
+                              {address.city}, {address.state}
+                              {" - "}
+                              {address.postal_code}
                             </Text>
 
                             <Text>Phone: {address.phone}</Text>
                           </Box>
 
-                          {address.is_default === 1 && (
+                          {address.is_default === true && (
                             <Badge colorPalette="green">Default</Badge>
                           )}
                         </HStack>
                       </Card.Body>
                     </Card.Root>
                   ))}
-
-                  {!showNewAddress && (
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowNewAddress(true)}
-                    >
-                      + Add New Address
-                    </Button>
-                  )}
-
-                  {showNewAddress && (
-                    <VStack gap={3}>
-                      <Input
-                        name="name"
-                        placeholder="Name"
-                        value={formData.name}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="phone"
-                        placeholder="Phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="address"
-                        placeholder="Address"
-                        value={formData.address}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="city"
-                        placeholder="City"
-                        value={formData.city}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="state"
-                        placeholder="State"
-                        value={formData.state}
-                        onChange={handleChange}
-                      />
-
-                      <Input
-                        name="zip"
-                        placeholder="ZIP"
-                        value={formData.zip}
-                        onChange={handleChange}
-                      />
-
-                      <Button colorPalette="green" onClick={saveNewAddress}>
-                        Save Address
-                      </Button>
-                    </VStack>
-                  )}
                 </VStack>
               </Dialog.Body>
 
