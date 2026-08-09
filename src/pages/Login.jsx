@@ -39,15 +39,15 @@ function Login() {
 
       const authData = {
         isLoggedIn: true,
-        token: response.data.token,
-        user: response.data.user,
+        token: response.data.data.token,
+        user: response.data.data.user,
       };
 
       localStorage.setItem("auth", JSON.stringify(authData));
 
       showToast({
         title: "Login successful",
-        description: `Welcome ${response.data.user.name}`,
+        description: `Welcome ${response.data.data.user.name}`,
         type: "success",
       });
 
