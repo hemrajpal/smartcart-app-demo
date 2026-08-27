@@ -138,7 +138,7 @@ function Checkout() {
         type: "success",
       });
 
-      navigate("/success", {
+      navigate(`/payment-method/${response.data.order.id}`, {
         state: {
           order: response.data.order,
         },

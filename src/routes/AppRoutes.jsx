@@ -7,6 +7,7 @@ import Home from "../pages/Home";
 import Cart from "../pages/Cart";
 import ProductDetails from "../pages/ProductDetails";
 import Checkout from "../pages/Checkout";
+import PaymentMethod from "../pages/PaymentMethod";
 import OrderSuccess from "../pages/OrderSuccess";
 import Account from "../pages/Account";
 import Orders from "../pages/Orders";
@@ -39,6 +40,7 @@ function AppRoutes() {
           <Route path="/product/:id" element={<ProductDetails />} />
 
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/payment-method/:orderId" element={<PaymentMethod />} />
 
           <Route path="/success" element={<OrderSuccess />} />
 
