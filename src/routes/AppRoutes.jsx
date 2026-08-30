@@ -16,6 +16,8 @@ import ChangePassword from "../pages/ChangePassword";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
+import StripePayment from "../pages/StripePayment";
+import PaymentSuccess from "../pages/PaymentSuccess";
 
 function AppRoutes() {
   return (
@@ -41,8 +43,10 @@ function AppRoutes() {
 
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment-method/:orderId" element={<PaymentMethod />} />
+          <Route path="/stripe-payment/:orderId" element={<StripePayment />} />
 
           <Route path="/success" element={<OrderSuccess />} />
+          <Route path="/payment-success/:orderId" element={<PaymentSuccess />} />
 
           <Route path="/account" element={<Account />} />
 
