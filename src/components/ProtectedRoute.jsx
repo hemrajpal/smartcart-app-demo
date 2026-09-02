@@ -4,7 +4,7 @@ function ProtectedRoute({ children }) {
   const auth = JSON.parse(localStorage.getItem("auth"));
 
   if (!auth?.isLoggedIn) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
