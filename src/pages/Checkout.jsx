@@ -144,10 +144,10 @@ function Checkout() {
         },
       });
     } catch (error) {
-      alert(JSON.stringify(error));
+      //alert(JSON.stringify(error));
       showToast({
         title: "Order failed",
-        description: error.response?.data?.message || "Unable to place order",
+        description: error.message || "Unable to place order",
         type: "error",
       });
     } finally {
