@@ -23,7 +23,7 @@ function Navbar() {
 
   const logout = () => {
     localStorage.removeItem("auth");
-    navigate("/");
+    navigate("/login");
   };
 
   return (
