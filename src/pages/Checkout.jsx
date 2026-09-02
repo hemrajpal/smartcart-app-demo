@@ -144,6 +144,7 @@ function Checkout() {
         },
       });
     } catch (error) {
+      alert(JSON.stringify(error));
       showToast({
         title: "Order failed",
         description: error.response?.data?.message || "Unable to place order",
