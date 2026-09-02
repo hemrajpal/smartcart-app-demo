@@ -187,7 +187,7 @@ const PaymentSuccess = () => {
                                 borderRadius="xl"
                                 onClick={() =>
                                     navigate(
-                                        `/rders`
+                                        `/orders`
                                     )
                                 }
                             >
