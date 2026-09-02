@@ -24,7 +24,7 @@ function AppRoutes() {
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
         {/* Protected Routes with Navbar */}
@@ -35,7 +35,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route path="/home" element={<Home />} />
+          <Route path="/" element={<Home />} />
 
           <Route path="/cart" element={<Cart />} />
 
