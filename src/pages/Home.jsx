@@ -18,6 +18,9 @@ import { ADD_TO_CART } from "../redux/actionTypes";
 import { useToast } from "../components/ToastProvider";
 import privateApi from "../config/privateApi";
 import echo from "../echo";
+import axios from "axios";
+
+let cancelTokenSource = null;
 
 function Home() {
   const [search, setSearch] = useState("");
@@ -42,11 +45,25 @@ function Home() {
       };
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (search = '') => {
+
+     // Cancel previous request
+    if (cancelTokenSource) {
+      cancelTokenSource.cancel("Previous request cancelled");
+    }
+
+    // Create new cancel token
+    cancelTokenSource = axios.CancelToken.source();
+    
     try {
       setLoading(true);
 
-      const response = await privateApi.get("/products");
+      const response = await privateApi.get(`/products`, {
+        params: {
+          search: search,
+        },
+        cancelToken: cancelTokenSource.token,
+      });
 
       setProducts(response.data.data || []);
     } catch (error) {
@@ -61,12 +78,8 @@ function Home() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
+    fetchProducts(search);
+  }, [search]);
 
   const addToCart = async (product) => {
     try {
@@ -124,7 +137,7 @@ function Home() {
         <Box display="flex" justifyContent="center" py={10}>
           <Spinner size="lg" color="blue.500" />
         </Box>
-      ) : filteredProducts.length === 0 ? (
+      ) : products.length === 0 ? (
         <Text>No products found.</Text>
       ) : (
         <Grid
@@ -136,7 +149,7 @@ function Home() {
           }}
           gap={6}
         >
-          {filteredProducts.map((product) => (
+          {products.map((product) => (
             <Card.Root key={product.id} shadow="md" overflow="hidden">
               <Link to={`/product/${product.slug}`}>
                 <Image
