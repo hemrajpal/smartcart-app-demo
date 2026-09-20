@@ -17,6 +17,7 @@ import { useDispatch } from "react-redux";
 import { ADD_TO_CART } from "../redux/actionTypes";
 import { useToast } from "../components/ToastProvider";
 import privateApi from "../config/privateApi";
+import echo from "../echo";
 
 function Home() {
   const [search, setSearch] = useState("");
@@ -26,6 +27,20 @@ function Home() {
 
   const dispatch = useDispatch();
   const { showToast } = useToast();
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+      echo.channel("test-channel")
+          .listen(".test.message", (event) => {
+              console.log("WebSocket message:", event.message);
+
+              setMessage(event.message);
+          });
+
+      return () => {
+          echo.leaveChannel("test-channel");
+      };
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -88,6 +103,16 @@ function Home() {
     <Box p={6}>
       <Heading mb={5}>Shop Products</Heading>
 
+      <h3>WebSocket Test</h3>
+
+      {message ? (
+          <div className="alert alert-success">
+              {message}
+          </div>
+      ) : (
+          <div>Waiting for WebSocket message...</div>
+      )}
+
       <Input
         placeholder="Search products..."
         mb={6}
@@ -113,7 +138,7 @@ function Home() {
         >
           {filteredProducts.map((product) => (
             <Card.Root key={product.id} shadow="md" overflow="hidden">
-              <Link to={`/product/${product.id}`}>
+              <Link to={`/product/${product.slug}`}>
                 <Image
                   src={
                     product.image ||
@@ -130,7 +155,7 @@ function Home() {
               <Card.Body>
                 <VStack align="stretch" gap={3}>
                   <Link
-                    to={`/product/${product.id}`}
+                    to={`/product/${product.slug}`}
                     style={{ textDecoration: "none" }}
                   >
                     <Heading
@@ -165,7 +190,7 @@ function Home() {
 
                   <Button
                     as={Link}
-                    to={`/product/${product.id}`}
+                    to={`/product/${product.slug}`}
                     variant="outline"
                   >
                     View Details

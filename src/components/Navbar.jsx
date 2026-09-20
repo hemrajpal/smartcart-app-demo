@@ -10,6 +10,9 @@ import {
 
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import privateApi from "../config/privateApi";
+import { useEffect, useState } from "react";
+import echo from "../echo";
 
 function Navbar() {
   const navigate = useNavigate();
@@ -20,6 +23,68 @@ function Navbar() {
   const cart = useSelector((state) => state.cart);
 
   const cartCount = cart.length;
+
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  /*
+   * Get initial unread notification count
+   */
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await privateApi.get("/notifications");
+
+        const result = await response.data;
+
+        if (result.status) {
+          setNotificationCount(
+            result.data.unread_count
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Notification count error:",
+          error
+        );
+      }
+    };
+
+    if (user?.id) {
+      fetchNotificationCount();
+    }
+  }, [user?.id]);
+
+  /*
+   * Listen for Laravel Broadcast notification
+   */
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    const channelName = `App.Models.User.${user.id}`;
+
+    const channel = echo.private(channelName);
+
+    channel.notification((notification) => {
+
+      /* setNotificationCount(
+        (prev) => prev + 1
+      ); */
+
+      console.log("Notification:", notification);
+
+      const count = notification.unread_count;
+
+      if (count !== undefined) {
+          setNotificationCount(count);
+      }
+    });
+
+    return () => {
+      echo.leave(channelName);
+    };
+  }, [user?.id]);
 
   const logout = () => {
     localStorage.removeItem("auth");
@@ -55,6 +120,8 @@ function Navbar() {
             {cartCount}
           </Badge>
         </Button>
+
+        <Button as={Link} to="/notifications" variant="ghost" color="white" _hover={{ bg: "blue.500" }} > 🔔 Notifications {notificationCount > 0 && ( <Badge ml={2} colorPalette="red"> {notificationCount} </Badge> )} </Button>
 
         <Menu.Root>
           <Menu.Trigger asChild>

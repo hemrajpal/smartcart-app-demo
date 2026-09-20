@@ -19,6 +19,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import StripePayment from "../pages/StripePayment";
 import PaymentSuccess from "../pages/PaymentSuccess";
+import Notifications from "../pages/Notifications";
 
 function AppRoutes() {
   return (
@@ -57,6 +58,7 @@ function AppRoutes() {
           <Route path="/account/address" element={<Addresses />} />
 
           <Route path="/account/password" element={<ChangePassword />} />
+          <Route path="/notifications" element={<Notifications />} />
         </Route>
       </Routes>
     </BrowserRouter>
