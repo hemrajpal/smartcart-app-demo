@@ -27,6 +27,9 @@ function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
 
   const dispatch = useDispatch();
   const { showToast } = useToast();
@@ -45,28 +48,62 @@ function Home() {
       };
   }, []);
 
-  const fetchProducts = async (search = '') => {
+  const fetchProducts = async (
+    searchValue = "",
+    pageNumber = 1,
+    loadMore = false
+  ) => {
+    // Cancel previous request only when doing a new search
+    if (!loadMore) {
+      if (cancelTokenSource) {
+        cancelTokenSource.cancel("Previous request cancelled");
+      }
 
-     // Cancel previous request
-    if (cancelTokenSource) {
-      cancelTokenSource.cancel("Previous request cancelled");
+      cancelTokenSource = axios.CancelToken.source();
     }
 
-    // Create new cancel token
-    cancelTokenSource = axios.CancelToken.source();
-    
     try {
-      setLoading(true);
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
 
-      const response = await privateApi.get(`/products`, {
+      const response = await privateApi.get("/products", {
         params: {
-          search: search,
+          search: searchValue,
+          page: pageNumber,
         },
-        cancelToken: cancelTokenSource.token,
+        cancelToken: cancelTokenSource?.token,
       });
 
-      setProducts(response.data.data || []);
+      const data = response.data.data;
+
+      console.log("Page:", data.current_page);
+      console.log("Last Page:", data.last_page);
+      console.log("Products:", data.data.length);
+
+      if (loadMore) {
+        // Append products
+        setProducts((prev) => [
+          ...prev,
+          ...data.data,
+        ]);
+      } else {
+        // Replace products
+        setProducts(data.data);
+      }
+
+      setPage(data.current_page);
+      setHasMore(data.has_more);
+
     } catch (error) {
+      if (axios.isCancel(error)) {
+        return;
+      }
+
+      console.error(error);
+
       showToast({
         title: "Error",
         description: "Unable to load products.",
@@ -74,11 +111,14 @@ function Home() {
       });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
-
   useEffect(() => {
-    fetchProducts(search);
+    setPage(1);
+    setHasMore(true);
+
+    fetchProducts(search, 1, false);
   }, [search]);
 
   const addToCart = async (product) => {
@@ -110,6 +150,22 @@ function Home() {
     } finally {
       setCartLoading(null);
     }
+  };
+
+  const loadMoreProducts = () => {
+    if (loadingMore || !hasMore) {
+      return;
+    }
+
+    const nextPage = page + 1;
+
+    console.log("Loading page:", nextPage);
+
+    fetchProducts(
+      search,
+      nextPage,
+      true
+    );
   };
 
   return (
@@ -213,6 +269,23 @@ function Home() {
             </Card.Root>
           ))}
         </Grid>
+      )}
+
+      {hasMore && !loading && (
+        <Box
+          display="flex"
+          justifyContent="center"
+          mt={8}
+        >
+          <Button
+            colorPalette="blue"
+            onClick={loadMoreProducts}
+            loading={loadingMore}
+            disabled={loadingMore}
+          >
+            Load More
+          </Button>
+        </Box>
       )}
     </Box>
   );
