@@ -172,7 +172,7 @@ function Home() {
     <Box p={6}>
       <Heading mb={5}>Shop Products</Heading>
 
-      <h3>WebSocket Test</h3>
+      {/* <h3>WebSocket Test</h3>
 
       {message ? (
           <div className="alert alert-success">
@@ -180,7 +180,7 @@ function Home() {
           </div>
       ) : (
           <div>Waiting for WebSocket message...</div>
-      )}
+      )} */}
 
       <Input
         placeholder="Search products..."
