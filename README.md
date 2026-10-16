@@ -1,18 +1,38 @@
-# React + Vite
+# SmartCart — React Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SmartCart is an e-commerce frontend built with **React 19 and Vite**. It provides the user interface for the SmartCart application and is designed to communicate with a separate Laravel REST API backend.
 
-Currently, two official plugins are available:
+## Tech Stack
+- React 19
+- Vite
+- JavaScript
+- Chakra UI
+- Redux
+- React Router
+- Axios
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Related Backend
+Laravel REST API: https://github.com/hemrajpal/laravel-smartcart-api-demo
 
-## React Compiler
+## Getting Started
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```bash
+git clone https://github.com/hemrajpal/smartcart-app-demo.git
+cd smartcart-app-demo
+npm install
+npm run dev
+```
 
-Note: This will impact Vite dev & build performances.
+Open the local URL displayed by Vite in your terminal.
 
-## Expanding the ESLint configuration
+## Build for Production
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run build
+```
+
+The production-ready files are generated in the `dist` directory.
+
+## Purpose
+
+This project demonstrates building a React-based frontend with Vite and integrating it with a Laravel REST API backend.
